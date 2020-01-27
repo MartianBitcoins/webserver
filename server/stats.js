@@ -8,8 +8,7 @@ var bankrollOffset = parseInt(process.env.BANKROLL_OFFSET) || 0;
 function getSiteStats() {
     database.getSiteStats(function(err, results) {
         if (err) {
-            next(new Error('Unable to get site stats: \n' + err));
-            return;
+            return new Error('Unable to get site stats: \n' + err);
         }
 
         stats = results;

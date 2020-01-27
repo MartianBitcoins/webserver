@@ -341,7 +341,7 @@ define([
                         self.lastHash = resp.last_hash;
                         self.created = resp.created;
                         self.startTime = new Date(Date.now() - resp.elapsed);
-                        self.joined = resp.joined;
+                        self.joined = resp.joined || [];
                         self.tableHistory = resp.table_history;
 
                         if (self.gameState === 'IN_PROGRESS')

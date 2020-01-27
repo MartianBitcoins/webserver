@@ -55,6 +55,7 @@ ALTER SEQUENCE fundings_id_seq OWNED BY fundings.id;
 CREATE TABLE games (
     id bigint NOT NULL,
     game_crash bigint NOT NULL,
+    seed text,
     created timestamp with time zone DEFAULT now() NOT NULL,
     ended boolean DEFAULT false NOT NULL
 );
@@ -129,7 +130,7 @@ CREATE TABLE plays (
     id bigint NOT NULL,
     user_id bigint NOT NULL,
     cash_out bigint,
-    auto_cash_out bigint NOT NULL,
+    auto_cash_out bigint,
     game_id bigint NOT NULL,
     created timestamp with time zone DEFAULT now() NOT NULL,
     bet bigint,
