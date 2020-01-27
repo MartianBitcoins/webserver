@@ -1,5 +1,5 @@
 define([
-    'lib/socket.io-1.2.1',
+    'lib/socket.io',
     'lib/events',
     'lib/lodash',
     'lib/clib',

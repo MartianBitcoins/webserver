@@ -13,11 +13,9 @@ var database = require('./server/database');
 var lib = require('./server/lib');
 var dotCaching = true;
 
-var _ = require('lodash');
-
 // Simplify and de-verbosify timeago output.
 var timeago = require('timeago');
-var timeago_strings = _.extend(timeago.settings.strings, {
+var timeago_strings = Object.assign(timeago.settings.strings, {
   seconds: '< 1 min',
   minute: '1 min',
   minutes: '%d mins',
@@ -32,7 +30,12 @@ var timeago_strings = _.extend(timeago.settings.strings, {
 });
 timeago.settings.strings = timeago_strings;
 
-app.use(bodyParser());
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
+app.use(bodyParser.json())
+
 app.use(cookieParser());
 
 app.set("views", path.join(__dirname, '/views'));

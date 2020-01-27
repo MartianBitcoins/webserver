@@ -1,18 +1,18 @@
-var assert = require('better-assert');
-var async = require('async');
-var bitcoinjs = require('bitcoinjs-lib');
-var request = require('request');
-var timeago = require('timeago');
-var lib = require('./lib');
-var database = require('./database');
-var withdraw = require('./withdraw');
-var sendEmail = require('./sendEmail');
-var speakeasy = require('speakeasy');
-var qr = require('qr-image');
-var uuid = require('uuid');
-var _ = require('lodash');
+const assert = require('better-assert');
+const async = require('async');
+const bitcoinjs = require('bitcoinjs-lib');
+const request = require('request');
+const timeago = require('timeago');
+const lib = require('./lib');
+const database = require('./database');
+const withdraw = require('./withdraw');
+const sendEmail = require('./sendEmail');
+const speakeasy = require('speakeasy');
+const qr = require('qr-image');
+const uuid = require('uuid');
+const _ = require('lodash');
 
-var sessionOptions = {
+const sessionOptions = {
     httpOnly: true,
     secure : process.env.NODE_ENV === 'production'
 };
@@ -457,7 +457,7 @@ exports.security = function(req, res) {
     assert(user);
 
     if (!user.mfa_secret) {
-        user.mfa_potential_secret = speakeasy.generate_key({ length: 32 }).base32;
+        user.mfa_potential_secret = speakeasy.generateSecret({ length: 32 }).base32;
         var qrUri = 'otpauth://totp/MoneyPot:' + user.username + '?secret=' + user.mfa_potential_secret + '&issuer=MoneyPot';
         user.qr_svg = qr.imageSync(qrUri, { type: 'svg' });
         user.sig = lib.sign(user.username + '|' + user.mfa_potential_secret);
@@ -487,7 +487,7 @@ exports.enableMfa = function(req, res, next) {
     if (!lib.validateSignature(user.username + '|' + secret, sig))
         return next('Could not validate sig');
 
-    var expected = speakeasy.totp({ key: secret, encoding: 'base32' });
+    var expected = speakeasy.totp({ secret, encoding: 'base32' });
 
     if (otp !== expected) {
         user.mfa_potential_secret = secret;
@@ -520,7 +520,7 @@ exports.disableMfa = function(req, res, next) {
     if (!user.mfa_secret) return res.redirect('/security?err=2FA%20is%20not%20enabled');
     if (!otp) return res.redirect('/security?err=No%20OTP');
 
-    var expected = speakeasy.totp({ key: secret, encoding: 'base32' });
+    var expected = speakeasy.totp({ secret, encoding: 'base32' });
 
     if (otp !== expected)
         return res.redirect('/security?err=invalid%20one-time%20password');

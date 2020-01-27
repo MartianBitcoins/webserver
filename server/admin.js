@@ -1,5 +1,4 @@
 var assert = require('assert');
-var async = require('async');
 var database = require('./database');
 
 /**

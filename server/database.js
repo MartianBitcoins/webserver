@@ -1,26 +1,27 @@
-var assert = require('assert');
-var uuid = require('uuid');
+const assert = require('assert');
+const uuid = require('uuid');
 
-var async = require('async');
-var lib = require('./lib');
-var pg = require('pg');
-var passwordHash = require('password-hash');
-var speakeasy = require('speakeasy');
+const async = require('async');
+const lib = require('./lib');
+const { Client, types: pgTypes } = require('pg');
+const passwordHash = require('password-hash');
+const speakeasy = require('speakeasy');
 
-var databaseUrl = process.env.DATABASE_URL;
+const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl)
     throw new Error('must set DATABASE_URL environment var');
 
 console.log('DATABASE_URL: ', databaseUrl);
 
-pg.types.setTypeParser(20, function(val) { // parse int8 as an integer
+pgTypes.setTypeParser(20, function(val) { // parse int8 as an integer
     return val === null ? null : parseInt(val);
 });
 
 // callback is called with (err, client, done)
 function connect(callback) {
-    return pg.connect(databaseUrl, callback);
+    const client = new Client(databaseUrl);
+    return client.connect(callback);
 }
 
 function query(query, params, callback) {
@@ -32,10 +33,10 @@ function query(query, params, callback) {
 
     doIt();
     function doIt() {
-        connect(function(err, client, done) {
+        connect(function(err, client) {
             if (err) return callback(err);
             client.query(query, params, function(err, result) {
-                done();
+                client.end();
                 if (err) {
                     if (err.code === '40P01') {
                         console.log('Warning: Retrying deadlocked transaction: ', query, params);
@@ -64,11 +65,11 @@ function getClient(runner, callback) {
     doIt();
 
     function doIt() {
-        connect(function (err, client, done) {
+        connect(function (err, client) {
             if (err) return callback(err);
 
             function rollback(err) {
-                client.query('ROLLBACK', done);
+                client.query('ROLLBACK', client.end);
 
                 if (err.code === '40P01') {
                     console.log('Warning: Retrying deadlocked transaction..');
@@ -90,7 +91,7 @@ function getClient(runner, callback) {
                         if (err)
                             return rollback(err);
 
-                        done();
+                        client.end();
                         callback(null, data);
                     });
                 });
@@ -185,7 +186,7 @@ exports.validateUser = function(username, password, otp, callback) {
         if (user.mfa_secret) {
             if (!otp) return callback('INVALID_OTP'); // really, just needs one
 
-            var expected = speakeasy.totp({key: user.mfa_secret, encoding: 'base32'});
+            var expected = speakeasy.totp({secret: user.mfa_secret, encoding: 'base32'});
 
             if (otp !== expected)
                 return callback('INVALID_OTP');

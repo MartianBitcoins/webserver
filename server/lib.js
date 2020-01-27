@@ -1,7 +1,12 @@
-var assert = require('better-assert');
-var bitcoinjs = require('bitcoinjs-lib');
-var crypto = require('crypto');
-var encKey = process.env.ENC_KEY || 'devkey';
+const assert = require('better-assert');
+const bitcoinjs = require('bitcoinjs-lib');
+// const b58 = require('bs58check');
+const crypto = require('crypto');
+const encKey = process.env.ENC_KEY || 'devkey';
+
+const BtcNetwork = bitcoinjs.networks[
+    process.env.NODE_ENV === 'production' ? 'bitcoin' : 'regtest'
+]
 
 exports.encrypt = function (text) {
     var cipher = crypto.createCipher('aes-256-cbc', encKey);
@@ -72,15 +77,26 @@ exports.isEligibleForGiveAway = function(lastGiveAway) {
     return Math.round(60 - timeElapsed);
 };
 
-var derivedPubKey = process.env.BIP32_DERIVED_KEY;
+const derivedPubKey = process.env.BIP32_DERIVED_KEY;
 if (!derivedPubKey)
     throw new Error('Must set env var BIP32_DERIVED_KEY');
 
+// function zpubToXpub(z) {
+//     let data = b58.decode(z);
+//     data = data.slice(4);
+//     data = Buffer.concat([Buffer.from('0488b21e','hex'), data]);
+//     return b58.encode(data);
+// }
 
-var hdNode = bitcoinjs.HDNode.fromBase58(derivedPubKey);
+// const xpub = zpubToXpub(derivedPubKey);
+
+var hdNode = bitcoinjs.bip32.fromBase58(derivedPubKey, BtcNetwork);
 
 exports.deriveAddress = function(index) {
-    return hdNode.derive(index).pubKey.getAddress().toString();
+    console.log({hdNode, index, d: hdNode.derive(index)})
+    const {publicKey: pubkey} = hdNode.derive(index);
+    // return hdNode.derive(index).publicKey.getAddress().toString();
+    return bitcoinjs.payments.p2pkh({ pubkey, BtcNetwork }).address.toString();
 };
 
 exports.formatSatoshis = function(n, decimals) {
